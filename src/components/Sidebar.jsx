@@ -1,10 +1,8 @@
-import { LayoutDashboard, ListChecks, Filter, Target, Download, LogOut } from "lucide-react";
+import { LayoutDashboard, ListChecks, Download, LogOut } from "lucide-react";
 
 const items = [
   { id:"dashboard", label:"Dashboard", icon:LayoutDashboard },
   { id:"projects",  label:"Project Tracker", icon:ListChecks },
-  { id:"funnel",    label:"Funnel", icon:Filter },
-  { id:"targets",   label:"Target Accounts", icon:Target },
 ];
 
 export default function Sidebar({ active, onChange, onExport, user, onSignOut }) {
@@ -13,7 +11,7 @@ export default function Sidebar({ active, onChange, onExport, user, onSignOut })
       <div className="px-5 py-5 border-b border-white/10">
         <div className="text-xs uppercase tracking-widest text-sky-200">SPL Pittsburgh</div>
         <div className="text-xl font-bold">SureSales</div>
-        <div className="text-[11px] text-sky-200 mt-1">Appalachia funnel + project tracker</div>
+        <div className="text-[11px] text-sky-200 mt-1">Appalachia client work tracker</div>
       </div>
       <nav className="flex-1 py-3">
         {items.map(({ id, label, icon:Icon }) => (

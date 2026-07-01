@@ -3,23 +3,39 @@ import Sidebar from "./components/Sidebar.jsx";
 import AuthGate from "./components/AuthGate.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import ProjectTracker from "./components/ProjectTracker.jsx";
-import Funnel from "./components/Funnel.jsx";
-import TargetAccounts from "./components/TargetAccounts.jsx";
-import { SEED_PROJECTS, SEED_TARGETS } from "./data/seed.js";
+import { SEED_CLIENTS, SEED_PROJECTS, SEED_TASKS } from "./data/seed.js";
 import { isSupabaseConfigured, supabase } from "./lib/supabaseClient.js";
 import {
   deleteProject,
+  deleteTask,
   loadLocalData,
   loadSureSalesData,
+  saveClient,
   saveLocalData,
   saveProject,
-  saveTarget,
+  saveTask,
 } from "./lib/suresalesRepository.js";
 
+const seedData = {
+  clients: SEED_CLIENTS,
+  projects: SEED_PROJECTS,
+  tasks: SEED_TASKS,
+};
+
+const nextId = (items, prefix) => {
+  const nextNumber =
+    Math.max(
+      0,
+      ...items.map((item) => Number(item.id?.replace(`${prefix}-`, "")) || 0)
+    ) + 1;
+  return `${prefix}-${String(nextNumber).padStart(3, "0")}`;
+};
+
 export default function App() {
-  const [view, setView] = useState("dashboard");
+  const [route, setRoute] = useState({ name: "dashboard" });
+  const [clients, setClients] = useState(SEED_CLIENTS);
   const [projects, setProjects] = useState(SEED_PROJECTS);
-  const [targets, setTargets] = useState(SEED_TARGETS);
+  const [tasks, setTasks] = useState(SEED_TASKS);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(isSupabaseConfigured);
   const [dataLoading, setDataLoading] = useState(true);
@@ -66,26 +82,22 @@ export default function App() {
     const loadData = async () => {
       setDataLoading(true);
       try {
-        const data = await loadSureSalesData({
-          projects: SEED_PROJECTS,
-          targets: SEED_TARGETS,
-        });
+        const data = await loadSureSalesData(seedData);
 
         if (!active) return;
+        setClients(data.clients);
         setProjects(data.projects);
-        setTargets(data.targets);
+        setTasks(data.tasks);
         setStorageSource(data.source);
         setSyncState("saved");
         setSyncError("");
       } catch (error) {
-        const localData = loadLocalData({
-          projects: SEED_PROJECTS,
-          targets: SEED_TARGETS,
-        });
+        const localData = loadLocalData(seedData);
 
         if (!active) return;
+        setClients(localData.clients);
         setProjects(localData.projects);
-        setTargets(localData.targets);
+        setTasks(localData.tasks);
         setStorageSource("local");
         setSyncState("error");
         setSyncError(error.message || "Could not load Supabase data.");
@@ -102,8 +114,8 @@ export default function App() {
   }, [user]);
 
   useEffect(() => {
-    if (!dataLoading) saveLocalData({ projects, targets });
-  }, [dataLoading, projects, targets]);
+    if (!dataLoading) saveLocalData({ clients, projects, tasks });
+  }, [clients, dataLoading, projects, tasks]);
 
   const persistRemote = async (operation) => {
     if (!isSupabaseConfigured || !user) return;
@@ -122,6 +134,16 @@ export default function App() {
     }
   };
 
+  const handleClientChange = (id, field, value) => {
+    const nextClients = clients.map((client) =>
+      client.id === id ? { ...client, [field]: value } : client
+    );
+    const changedClient = nextClients.find((client) => client.id === id);
+
+    setClients(nextClients);
+    persistRemote(() => saveClient(changedClient));
+  };
+
   const handleProjectChange = (id, field, value) => {
     const nextProjects = projects.map((project) =>
       project.id === id ? { ...project, [field]: value } : project
@@ -132,29 +154,74 @@ export default function App() {
     persistRemote(() => saveProject(changedProject));
   };
 
-  const handleProjectAdd = (project) => {
+  const handleProjectAdd = (clientId) => {
+    const client = clients.find((candidate) => candidate.id === clientId);
+    const project = {
+      id: nextId(projects, "P"),
+      clientId,
+      clientName: client?.name || "Unknown Client",
+      name: "New project",
+      bucket: "New",
+      description: "",
+      priority: "Medium",
+      stage: "Lead / Qualification",
+      status: "Open",
+      health: client?.health || "Stable",
+      owner: "Unassigned",
+      currentAsk: "",
+      notes: "",
+    };
+
     setProjects([...projects, project]);
+    setRoute({ name: "project", projectId: project.id });
     persistRemote(() => saveProject(project));
   };
 
   const handleProjectRemove = (id) => {
     setProjects(projects.filter((project) => project.id !== id));
+    setTasks(tasks.filter((task) => task.projectId !== id));
+    if (route.projectId === id) setRoute({ name: "projects" });
     persistRemote(() => deleteProject(id));
   };
 
-  const handleTargetChange = (index, field, value) => {
-    const nextTargets = targets.map((target, targetIndex) =>
-      targetIndex === index ? { ...target, [field]: value } : target
-    );
+  const handleTaskAdd = (projectId) => {
+    const project = projects.find((candidate) => candidate.id === projectId);
+    const task = {
+      id: nextId(tasks, "T"),
+      projectId,
+      title: "New task",
+      status: "Open",
+      owner: project?.owner || "Unassigned",
+      dueDate: "",
+      notes: "",
+    };
 
-    setTargets(nextTargets);
-    persistRemote(() => saveTarget(nextTargets[index], index));
+    setTasks([...tasks, task]);
+    persistRemote(() => saveTask(task));
+  };
+
+  const handleTaskChange = (id, field, value) => {
+    const nextTasks = tasks.map((task) =>
+      task.id === id ? { ...task, [field]: value } : task
+    );
+    const changedTask = nextTasks.find((task) => task.id === id);
+
+    setTasks(nextTasks);
+    persistRemote(() => saveTask(changedTask));
+  };
+
+  const handleTaskRemove = (id) => {
+    setTasks(tasks.filter((task) => task.id !== id));
+    persistRemote(() => deleteTask(id));
   };
 
   const exportJSON = () => {
-    const blob = new Blob([JSON.stringify({ projects, targets }, null, 2)], {
-      type: "application/json",
-    });
+    const blob = new Blob(
+      [JSON.stringify({ clients, projects, tasks }, null, 2)],
+      {
+        type: "application/json",
+      }
+    );
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "suresales-export.json";
@@ -175,6 +242,15 @@ export default function App() {
           ? "Saved to Supabase"
           : "Saved locally";
 
+  const headerTitle =
+    route.name === "dashboard"
+      ? "Dashboard"
+      : route.name === "client"
+        ? "Client Detail"
+        : route.name === "project"
+          ? "Project Detail"
+          : "Project Tracker";
+
   if (isSupabaseConfigured && (authLoading || !user)) {
     return <AuthGate loading={authLoading} />;
   }
@@ -182,48 +258,53 @@ export default function App() {
   return (
     <div className="flex h-full">
       <Sidebar
-        active={view}
-        onChange={setView}
+        active={route.name === "dashboard" ? "dashboard" : "projects"}
+        onChange={(name) => setRoute({ name })}
         onExport={exportJSON}
         user={user}
         onSignOut={isSupabaseConfigured ? signOut : null}
       />
       <main className="flex-1 overflow-auto">
-        <header className="px-8 py-5 bg-white border-b border-slate-200 flex items-center justify-between">
+        <header className="flex items-center justify-between border-b border-slate-200 bg-white px-8 py-5">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800 capitalize">
-              {view === "projects"
-                ? "Project Tracker"
-                : view === "targets"
-                  ? "Target Accounts"
-                  : view}
-            </h1>
+            <h1 className="text-2xl font-bold text-slate-800">{headerTitle}</h1>
             <p className="text-sm text-slate-500">
               SPL Pittsburgh - Appalachia 2026
             </p>
             {syncError && (
-              <p className="text-xs text-rose-600 mt-1">{syncError}</p>
+              <p className="mt-1 text-xs text-rose-600">{syncError}</p>
             )}
           </div>
           <div className="text-xs text-slate-400">
-            {storageLabel} - {projects.length} projects
+            {storageLabel} - {projects.length} projects - {tasks.length} tasks
           </div>
         </header>
-        <section className="p-8 space-y-6">
-          {view === "dashboard" && <Dashboard projects={projects} />}
-          {view === "projects" && (
-            <ProjectTracker
+        <section className="space-y-6 p-8">
+          {route.name === "dashboard" && (
+            <Dashboard
+              clients={clients}
               projects={projects}
+              tasks={tasks}
+              onClientSelect={(clientId) => setRoute({ name: "client", clientId })}
+              onProjectSelect={(projectId) =>
+                setRoute({ name: "project", projectId })
+              }
+            />
+          )}
+          {route.name !== "dashboard" && (
+            <ProjectTracker
+              clients={clients}
+              projects={projects}
+              tasks={tasks}
+              route={route}
+              onNavigate={setRoute}
+              onClientChange={handleClientChange}
               onProjectAdd={handleProjectAdd}
               onProjectChange={handleProjectChange}
               onProjectRemove={handleProjectRemove}
-            />
-          )}
-          {view === "funnel" && <Funnel projects={projects} />}
-          {view === "targets" && (
-            <TargetAccounts
-              targets={targets}
-              onTargetChange={handleTargetChange}
+              onTaskAdd={handleTaskAdd}
+              onTaskChange={handleTaskChange}
+              onTaskRemove={handleTaskRemove}
             />
           )}
         </section>

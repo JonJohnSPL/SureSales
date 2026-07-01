@@ -1,8 +1,7 @@
 # SureSales
 
-Appalachia sales funnel + project tracker for SPL Pittsburgh.
-Mirrors the Excel workbook 1:1 (Dashboard, Project Tracker, Funnel, Target Accounts)
-with inline editing and local persistence via `localStorage`.
+Appalachia client work tracker for SPL Pittsburgh. The app is organized around
+clients, projects, and project tasks.
 
 ## Quick start
 
@@ -11,7 +10,7 @@ npm install
 npm run dev
 ```
 
-Then open the URL Vite prints (usually http://localhost:5173).
+Then open the URL Vite prints, usually http://localhost:5173.
 
 ## Build
 
@@ -22,56 +21,53 @@ npm run preview
 
 ## Structure
 
-```
+```text
 suresales/
-├── package.json
-├── vite.config.js
-├── tailwind.config.js
-├── postcss.config.js
-├── index.html
-└── src/
-    ├── main.jsx
-    ├── index.css
-    ├── App.jsx
-    ├── data/
-    │   └── seed.js
-    └── components/
-        ├── Dashboard.jsx
-        ├── ProjectTracker.jsx
-        ├── Funnel.jsx
-        ├── TargetAccounts.jsx
-        ├── Sidebar.jsx
-        └── ui.jsx
++-- package.json
++-- vite.config.js
++-- tailwind.config.js
++-- postcss.config.js
++-- index.html
++-- supabase/
+|   +-- schema.sql
++-- src/
+    +-- main.jsx
+    +-- index.css
+    +-- App.jsx
+    +-- data/
+    |   +-- seed.js
+    +-- lib/
+    |   +-- supabaseClient.js
+    |   +-- suresalesRepository.js
+    +-- components/
+        +-- AuthGate.jsx
+        +-- Dashboard.jsx
+        +-- ProjectTracker.jsx
+        +-- Sidebar.jsx
+        +-- ui.jsx
 ```
 
-## Data sources (seeded)
+## Data Model
 
-- Email thread: RE: Appalachia Pending and Current Work (June 23/24, 2026)
-- Master_Client_List_step3_linked 1.xlsx
-- SPL_Pittsburgh_2026_Market_Analysis.docx
-- Pittsburgh Business Model 2026 Energy+Environmental.pptx
+- `clients`: client profile metadata from the streamlined workbook.
+- `projects`: client-linked project cards with bucket, stage, owner, ask, and notes.
+- `project_tasks`: first-class tasks linked to projects.
 
-## Persistence
+Without Supabase credentials, state is saved to `localStorage` under
+`suresales_v2`. If old `suresales_v1` local data exists, the app migrates its
+projects into the new shape and creates initial tasks from each next step.
 
-Without Supabase credentials, state is saved to `localStorage` under the key
-`suresales_v1`. Use the **Export JSON** button in the sidebar to download a
-snapshot.
-
-With Supabase configured, signed-in users share the same Postgres-backed
-projects and target accounts. The app still keeps a local backup in
-`localStorage` if a sync attempt fails.
-
-## Supabase setup
+## Supabase Setup
 
 1. Create a Supabase project.
 2. Run `supabase/schema.sql` in the Supabase SQL editor.
 3. Copy `.env.example` to `.env.local`.
 4. Fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`.
-5. Confirm the `projects` and `target_accounts` tables are exposed in the
-   Supabase Data API settings.
+5. Confirm the `clients`, `projects`, and `project_tasks` tables are exposed in
+   the Supabase Data API settings.
 6. Add the app URL to Supabase Auth redirect URLs.
 7. Restart the Vite dev server.
 
-The schema enables RLS and grants table access only to authenticated users.
-For team use, keep Supabase Auth signups restricted to the people who should
-edit the tracker.
+The schema enables RLS and grants table access only to authenticated users. For
+team use, keep Supabase Auth signups restricted to the people who should edit
+the tracker.
