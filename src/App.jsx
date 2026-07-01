@@ -360,6 +360,7 @@ export default function App() {
               onProjectSelect={(projectId) =>
                 setRoute({ name: "project", projectId })
               }
+              onProjectChange={handleProjectChange}
             />
           )}
           {route.name !== "dashboard" && (

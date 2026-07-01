@@ -1,6 +1,7 @@
-import { CalendarDays, CheckCircle2, Clock3 } from "lucide-react";
+import { useState } from "react";
+import { CalendarDays, CheckCircle2, Clock3, GripVertical } from "lucide-react";
 import { STAGES } from "../data/seed.js";
-import { Card, Pill, bucketTone, healthTone, priorityTone } from "./ui.jsx";
+import { Card, Pill, priorityTone } from "./ui.jsx";
 
 const formatDate = (value) => {
   if (!value) return "Unscheduled";
@@ -19,10 +20,21 @@ const sortByDueDate = (a, b) => {
   return a.dueDate.localeCompare(b.dueDate);
 };
 
-const ProjectCard = ({ project, onProjectSelect }) => (
+const ProjectCard = ({
+  project,
+  onProjectSelect,
+  onDragStart,
+  onDragEnd,
+  isDragging,
+}) => (
   <button
     onClick={() => onProjectSelect(project.id)}
-    className="w-full rounded-md border border-slate-300 bg-white p-2.5 text-left shadow-sm transition hover:border-sky-500"
+    draggable
+    onDragStart={(event) => onDragStart(event, project.id)}
+    onDragEnd={onDragEnd}
+    className={`w-full cursor-grab rounded-md border border-slate-300 bg-white p-2.5 text-left shadow-sm transition hover:border-sky-500 active:cursor-grabbing ${
+      isDragging ? "opacity-50 ring-2 ring-sky-300" : ""
+    }`}
   >
     <div className="flex items-start justify-between gap-2">
       <div className="min-w-0">
@@ -31,12 +43,10 @@ const ProjectCard = ({ project, onProjectSelect }) => (
         </div>
         <div className="mt-0.5 truncate text-sm font-semibold text-slate-950">{project.name}</div>
       </div>
-      <Pill tone={bucketTone(project.bucket)}>{project.bucket}</Pill>
+      <GripVertical className="shrink-0 text-slate-400" size={16} />
     </div>
     <div className="mt-2 flex flex-wrap gap-1.5">
       <Pill tone={priorityTone(project.priority)}>{project.priority}</Pill>
-      <Pill tone={healthTone(project.health)}>{project.health}</Pill>
-      <Pill tone="slate">{project.status}</Pill>
     </div>
     {project.currentAsk && (
       <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-700">{project.currentAsk}</p>
@@ -50,7 +60,10 @@ export default function Dashboard({
   tasks,
   onClientSelect,
   onProjectSelect,
+  onProjectChange,
 }) {
+  const [draggedProjectId, setDraggedProjectId] = useState("");
+  const [dragOverStage, setDragOverStage] = useState("");
   const projectById = new Map(projects.map((project) => [project.id, project]));
   const openTasks = tasks
     .filter((task) => task.status !== "Done")
@@ -71,6 +84,32 @@ export default function Dashboard({
       : []),
   ];
 
+  const handleProjectDragStart = (event, projectId) => {
+    setDraggedProjectId(projectId);
+    if (!event) return;
+
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", projectId);
+  };
+
+  const handleProjectDragEnd = () => {
+    setDraggedProjectId("");
+    setDragOverStage("");
+  };
+
+  const handleStageDrop = (event, stage) => {
+    event.preventDefault();
+    const projectId =
+      event.dataTransfer.getData("text/plain") || draggedProjectId;
+    const project = projects.find((candidate) => candidate.id === projectId);
+
+    setDraggedProjectId("");
+    setDragOverStage("");
+
+    if (!project || project.stage === stage) return;
+    onProjectChange(project.id, "stage", stage);
+  };
+
   return (
     <div className="space-y-4">
       <Card title="By Stage">
@@ -83,7 +122,22 @@ export default function Dashboard({
             return (
               <section
                 key={stage}
-                className="flex min-h-[16rem] w-64 shrink-0 flex-col rounded-md border border-slate-300 bg-slate-100"
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "move";
+                  setDragOverStage(stage);
+                }}
+                onDragLeave={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) {
+                    setDragOverStage("");
+                  }
+                }}
+                onDrop={(event) => handleStageDrop(event, stage)}
+                className={`flex min-h-[16rem] w-64 shrink-0 flex-col rounded-md border bg-slate-100 transition ${
+                  dragOverStage === stage
+                    ? "border-sky-600 ring-2 ring-sky-200"
+                    : "border-slate-300"
+                }`}
               >
                 <div className="flex items-center justify-between border-b border-slate-300 px-3 py-2">
                   <h3 className="truncate text-sm font-semibold text-slate-950">{stage}</h3>
@@ -95,6 +149,9 @@ export default function Dashboard({
                       key={project.id}
                       project={project}
                       onProjectSelect={onProjectSelect}
+                      onDragStart={handleProjectDragStart}
+                      onDragEnd={handleProjectDragEnd}
+                      isDragging={draggedProjectId === project.id}
                     />
                   ))}
                   {!stageProjects.length && (
