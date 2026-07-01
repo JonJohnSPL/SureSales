@@ -21,15 +21,15 @@ import {
 import {
   Card,
   Pill,
+  buttonClass,
   bucketTone,
+  ghostButtonClass,
   healthTone,
   inputClass,
   labelClass,
   priorityTone,
+  selectClass,
 } from "./ui.jsx";
-
-const selectClass =
-  "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100";
 
 const clientInitials = (client) =>
   (client?.shortName || client?.name || "?")
@@ -41,14 +41,14 @@ const clientInitials = (client) =>
 
 const ClientLogo = ({ client, size = "md" }) => {
   const sizes = {
-    sm: "h-10 w-10 text-sm",
-    md: "h-14 w-14 text-lg",
-    lg: "h-20 w-20 text-2xl",
+    sm: "h-9 w-9 text-xs",
+    md: "h-12 w-12 text-base",
+    lg: "h-16 w-16 text-xl",
   };
 
   return (
     <div
-      className={`${sizes[size]} shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100`}
+      className={`${sizes[size]} shrink-0 overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm`}
     >
       {client.logoUrl ? (
         <img
@@ -57,7 +57,7 @@ const ClientLogo = ({ client, size = "md" }) => {
           className="h-full w-full object-contain p-1.5"
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center bg-sky-50 font-semibold text-sky-800">
+        <div className="flex h-full w-full items-center justify-center bg-sky-100 font-bold text-sky-950">
           {clientInitials(client)}
         </div>
       )}
@@ -77,8 +77,8 @@ const clientStatusTone = (status) =>
 const VisualSelectField = ({ label, value, options, onChange, tone }) => (
   <label className="space-y-1">
     <div className={labelClass}>{label}</div>
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-      <div className="mb-3 flex items-center justify-between gap-3">
+    <div className="rounded-md border border-slate-300 bg-slate-50 p-2">
+      <div className="mb-2 flex items-center justify-between gap-2">
         <Pill tone={tone(value)}>{value}</Pill>
       </div>
       <select
@@ -101,7 +101,7 @@ const TextField = ({ label, value, onChange, textarea = false }) => (
       <textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        rows={4}
+        rows={3}
         className={inputClass}
       />
     ) : (
@@ -130,27 +130,27 @@ const SelectField = ({ label, value, options, onChange }) => (
 );
 
 const ProjectMiniCard = ({ project, onSelect, onRemove }) => (
-  <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+  <div className="rounded-md border border-slate-300 bg-white p-2.5 shadow-sm transition hover:border-sky-500">
     <button onClick={() => onSelect(project.id)} className="w-full text-left">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="font-semibold text-slate-900">{project.name}</div>
-          <div className="mt-1 text-xs text-slate-500">{project.owner}</div>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-semibold text-slate-950">{project.name}</div>
+          <div className="mt-0.5 truncate text-xs font-medium text-slate-600">{project.owner}</div>
         </div>
         <Pill tone={bucketTone(project.bucket)}>{project.bucket}</Pill>
       </div>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-2 flex flex-wrap gap-1.5">
         <Pill tone={priorityTone(project.priority)}>{project.priority}</Pill>
         <Pill tone="slate">{project.stage}</Pill>
       </div>
       {project.currentAsk && (
-        <p className="mt-3 text-sm leading-5 text-slate-600">{project.currentAsk}</p>
+        <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-700">{project.currentAsk}</p>
       )}
     </button>
-    <div className="mt-3 flex justify-end">
+    <div className="mt-2 flex justify-end">
       <button
         onClick={() => onRemove(project.id)}
-        className="rounded-md p-1.5 text-rose-500 hover:bg-rose-50 hover:text-rose-700"
+        className="rounded-md p-1.5 text-rose-700 hover:bg-rose-100 hover:text-rose-900"
         title="Delete project"
       >
         <Trash2 size={15} />
@@ -160,26 +160,26 @@ const ProjectMiniCard = ({ project, onSelect, onRemove }) => (
 );
 
 const ClientStack = ({ client, projects, onClientSelect, onProjectSelect, onProjectAdd, onProjectRemove }) => (
-  <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+  <section className="rounded-md border border-slate-300 bg-white shadow-sm">
     <button
       onClick={() => onClientSelect(client.id)}
-      className="w-full border-b border-slate-200 px-4 py-4 text-left hover:bg-slate-50"
+      className="w-full border-b border-slate-300 px-3 py-3 text-left hover:bg-slate-50"
     >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2.5">
             <ClientLogo client={client} size="sm" />
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <Building2 size={18} className="text-sky-700" />
-                <h3 className="font-semibold text-slate-900">{client.name}</h3>
+                <Building2 size={16} className="shrink-0 text-sky-800" />
+                <h3 className="truncate font-semibold text-slate-950">{client.name}</h3>
               </div>
-              <div className="mt-1 text-xs text-slate-500">
+              <div className="mt-0.5 text-xs font-medium text-slate-600">
                 {client.shortName}
               </div>
             </div>
           </div>
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="mt-2 flex flex-wrap gap-1.5">
             <Pill tone={clientStatusTone(client.status)}>{client.status}</Pill>
             <Pill tone="slate">{client.category || "Uncategorized"}</Pill>
             <Pill tone={healthTone(client.health)}>{client.health}</Pill>
@@ -189,7 +189,7 @@ const ClientStack = ({ client, projects, onClientSelect, onProjectSelect, onProj
         <Pill tone="slate">{projects.length} projects</Pill>
       </div>
     </button>
-    <div className="space-y-3 bg-slate-50 p-3">
+    <div className="space-y-2 bg-slate-100 p-2.5">
       {projects.map((project) => (
         <ProjectMiniCard
           key={project.id}
@@ -200,7 +200,7 @@ const ClientStack = ({ client, projects, onClientSelect, onProjectSelect, onProj
       ))}
       <button
         onClick={() => onProjectAdd(client.id)}
-        className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-3 text-sm font-medium text-slate-600 hover:border-sky-300 hover:text-sky-700"
+        className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-slate-400 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-sky-600 hover:text-sky-900"
       >
         <FolderPlus size={15} />
         Add project
@@ -219,36 +219,44 @@ const ClientDetail = ({
   onProjectAdd,
   onProjectRemove,
 }) => (
-  <div className="space-y-6">
-    <button
-      onClick={onBack}
-      className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-    >
-      <ArrowLeft size={15} />
-      Project Tracker
-    </button>
+  <div className="space-y-4">
+    <div className="flex items-center justify-between gap-3">
+      <button onClick={onBack} className={ghostButtonClass}>
+        <ArrowLeft size={15} />
+        Project Tracker
+      </button>
+      <button onClick={() => onProjectAdd(client.id)} className={buttonClass}>
+        <FolderPlus size={15} />
+        New Project
+      </button>
+    </div>
 
-    <Card
-      title={
-        <div className="flex items-center gap-3">
-          <ClientLogo client={client} size="md" />
-          <div>
-            <div>{client.name}</div>
-            <div className="mt-1 text-xs font-normal text-slate-500">
-              {client.category || "Uncategorized"}
+    <section className="rounded-md border border-slate-300 bg-white p-3 shadow-sm">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <ClientLogo client={client} size="lg" />
+          <div className="min-w-0">
+            <h2 className="truncate text-lg font-bold leading-6 text-slate-950">
+              {client.name}
+            </h2>
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium text-slate-600">
+              <span>{client.shortName || "No short name"}</span>
+              <span>{client.category || "Uncategorized"}</span>
+              <span>{client.region || "No region"}</span>
+              <span>{projects.length} projects</span>
             </div>
           </div>
         </div>
-      }
-      right={
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-1.5">
           <Pill tone={clientStatusTone(client.status)}>{client.status}</Pill>
           <Pill tone={healthTone(client.health)}>{client.health}</Pill>
           <Pill tone={priorityTone(client.priority)}>{client.priority}</Pill>
         </div>
-      }
-    >
-      <div className="grid gap-4 md:grid-cols-2">
+      </div>
+    </section>
+
+    <Card title="Client Fields">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         <TextField
           label="Client Name"
           value={client.name}
@@ -261,9 +269,9 @@ const ClientDetail = ({
         />
         <div className="space-y-1">
           <div className={labelClass}>Upload Logo</div>
-          <div className="flex items-center gap-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3">
+          <div className="flex items-center gap-2 rounded-md border border-dashed border-slate-400 bg-slate-50 p-2">
             <ClientLogo client={client} size="sm" />
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-navy px-3 py-2 text-sm font-medium text-white hover:bg-slate-800">
+            <label className={`${buttonClass} cursor-pointer`}>
               <Upload size={15} />
               Upload
               <input
@@ -321,10 +329,7 @@ const ClientDetail = ({
     <Card
       title={`Projects (${projects.length})`}
       right={
-        <button
-          onClick={() => onProjectAdd(client.id)}
-          className="inline-flex items-center gap-2 rounded-md bg-navy px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
-        >
+        <button onClick={() => onProjectAdd(client.id)} className={buttonClass}>
           <FolderPlus size={15} />
           New
         </button>
@@ -354,39 +359,67 @@ const ProjectDetail = ({
   onTaskChange,
   onTaskRemove,
 }) => (
-  <div className="space-y-6">
-    <button
-      onClick={onBack}
-      className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-    >
-      <ArrowLeft size={15} />
-      {client?.name || "Client"}
-    </button>
+  <div className="space-y-4">
+    <div className="flex items-center justify-between gap-3">
+      <button onClick={onBack} className={ghostButtonClass}>
+        <ArrowLeft size={15} />
+        {client?.name || "Client"}
+      </button>
+      <button onClick={() => onTaskAdd(project.id)} className={buttonClass}>
+        <CalendarPlus size={15} />
+        New Task
+      </button>
+    </div>
+
+    <section className="rounded-md border border-slate-300 bg-white p-3 shadow-sm">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap gap-1.5">
+            <Pill tone={bucketTone(project.bucket)}>{project.bucket}</Pill>
+            <Pill tone={priorityTone(project.priority)}>{project.priority}</Pill>
+            <Pill tone={healthTone(project.health)}>{project.health}</Pill>
+            <Pill tone="slate">{project.status}</Pill>
+          </div>
+          <h2 className="mt-2 truncate text-lg font-bold leading-6 text-slate-950">
+            {project.name}
+          </h2>
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium text-slate-600">
+            <span>{project.stage}</span>
+            <span>{project.owner}</span>
+            <span>{tasks.length} tasks</span>
+          </div>
+        </div>
+        {client && (
+          <div className="flex items-center gap-2 rounded-md border border-slate-300 bg-slate-50 px-2 py-2">
+            <ClientLogo client={client} size="sm" />
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold text-slate-950">
+                {client.name}
+              </div>
+              <div className="truncate text-xs font-medium text-slate-600">
+                {client.status} / {client.category || "Uncategorized"}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      {project.currentAsk && (
+        <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-950">
+          {project.currentAsk}
+        </div>
+      )}
+    </section>
 
     <Card
-      title={project.name}
+      title="Project Fields"
       right={
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-1.5">
           <Pill tone={bucketTone(project.bucket)}>{project.bucket}</Pill>
           <Pill tone={priorityTone(project.priority)}>{project.priority}</Pill>
         </div>
       }
     >
-      {client && (
-        <div className="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <div className={labelClass}>Client</div>
-          <div className="mt-2 flex items-center gap-3">
-            <ClientLogo client={client} size="sm" />
-            <div>
-              <div className="font-semibold text-slate-900">{client.name}</div>
-              <div className="mt-1 text-xs text-slate-500">
-                {client.status} / {client.category || "Uncategorized"}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         <TextField
           label="Project Name"
           value={project.name}
@@ -434,7 +467,7 @@ const ProjectDetail = ({
           onChange={(value) => onProjectChange(project.id, "description", value)}
           textarea
         />
-        <div className="md:col-span-2">
+        <div className="xl:col-span-3">
           <TextField
             label="Notes"
             value={project.notes}
@@ -448,19 +481,16 @@ const ProjectDetail = ({
     <Card
       title={`Project Tasks (${tasks.length})`}
       right={
-        <button
-          onClick={() => onTaskAdd(project.id)}
-          className="inline-flex items-center gap-2 rounded-md bg-navy px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
-        >
+        <button onClick={() => onTaskAdd(project.id)} className={buttonClass}>
           <CalendarPlus size={15} />
           New
         </button>
       }
     >
-      <div className="space-y-3">
+      <div className="space-y-2">
         {tasks.map((task) => (
-          <div key={task.id} className="rounded-lg border border-slate-200 p-4">
-            <div className="grid gap-3 md:grid-cols-[1fr_10rem_10rem_9rem_auto]">
+          <div key={task.id} className="rounded-md border border-slate-300 bg-slate-50 p-2.5">
+            <div className="grid gap-2 md:grid-cols-[minmax(12rem,1fr)_9rem_9rem_8.5rem_2.5rem]">
               <input
                 value={task.title}
                 onChange={(event) =>
@@ -500,7 +530,7 @@ const ProjectDetail = ({
               />
               <button
                 onClick={() => onTaskRemove(task.id)}
-                className="rounded-md p-2 text-rose-500 hover:bg-rose-50 hover:text-rose-700"
+                className="flex h-8 w-8 items-center justify-center rounded-md text-rose-700 hover:bg-rose-100 hover:text-rose-950"
                 title="Delete task"
               >
                 <Trash2 size={16} />
@@ -513,12 +543,12 @@ const ProjectDetail = ({
               }
               rows={2}
               placeholder="Task notes"
-              className={`${inputClass} mt-3`}
+              className={`${inputClass} mt-2`}
             />
           </div>
         ))}
         {!tasks.length && (
-          <div className="rounded-lg border border-dashed border-slate-300 p-5 text-sm text-slate-400">
+          <div className="rounded-md border border-dashed border-slate-400 bg-slate-50 p-4 text-sm font-medium text-slate-600">
             No tasks
           </div>
         )}
@@ -614,25 +644,25 @@ export default function ProjectTracker({
     .filter(({ projects: clientProjects }) => clientProjects.length);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-2 rounded-md border border-slate-300 bg-white p-3 shadow-sm md:flex-row md:items-center md:justify-between">
         <div className="relative md:w-80">
           <Search
             size={16}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500"
           />
           <input
             value={q}
             onChange={(event) => setQ(event.target.value)}
             placeholder="Search"
-            className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+            className={`${inputClass} py-1.5 pl-8`}
           />
         </div>
         <div className="flex items-center gap-2">
           <select
             value={bucketFilter}
             onChange={(event) => setBucketFilter(event.target.value)}
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+            className={`${selectClass} md:w-40`}
           >
             <option>All</option>
             {BUCKETS.map((bucket) => (
@@ -642,7 +672,7 @@ export default function ProjectTracker({
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-3 xl:grid-cols-2">
         {groupedProjects.map(({ client, projects: clientProjects }) => (
           <ClientStack
             key={client.id}

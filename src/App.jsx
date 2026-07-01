@@ -327,7 +327,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full bg-slate-100 text-slate-950">
       <Sidebar
         active={route.name === "dashboard" ? "dashboard" : "projects"}
         onChange={(name) => setRoute({ name })}
@@ -335,22 +335,22 @@ export default function App() {
         user={user}
         onSignOut={isSupabaseConfigured ? signOut : null}
       />
-      <main className="flex-1 overflow-auto">
-        <header className="flex items-center justify-between border-b border-slate-200 bg-white px-8 py-5">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">{headerTitle}</h1>
-            <p className="text-sm text-slate-500">
+      <main className="min-w-0 flex-1 overflow-auto">
+        <header className="flex flex-col gap-2 border-b border-slate-300 bg-white px-5 py-3 shadow-sm md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold leading-6 text-slate-950">{headerTitle}</h1>
+            <p className="text-xs font-medium text-slate-600">
               SPL Pittsburgh - Appalachia 2026
             </p>
             {syncError && (
               <p className="mt-1 text-xs text-rose-600">{syncError}</p>
             )}
           </div>
-          <div className="text-xs text-slate-400">
+          <div className="shrink-0 text-xs font-medium text-slate-600">
             {storageLabel} - {projects.length} projects - {tasks.length} tasks
           </div>
         </header>
-        <section className="space-y-6 p-8">
+        <section className="space-y-4 p-4 lg:p-5">
           {route.name === "dashboard" && (
             <Dashboard
               clients={clients}
