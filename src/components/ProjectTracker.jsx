@@ -3,7 +3,7 @@ import { Card, Pill, healthTone, priorityTone } from "./ui.jsx";
 import { STAGES, PRIORITIES, HEALTHS, OWNERS, STATUSES } from "../data/seed.js";
 import { Plus, Trash2 } from "lucide-react";
 
-export default function ProjectTracker({ projects, setProjects }) {
+export default function ProjectTracker({ projects, onProjectAdd, onProjectChange, onProjectRemove }) {
   const [q, setQ] = useState("");
   const [ownerF, setOwnerF] = useState("All");
   const [stageF, setStageF] = useState("All");
@@ -15,18 +15,21 @@ export default function ProjectTracker({ projects, setProjects }) {
       && (stageF === "All" || p.stage === stageF);
   }), [projects, q, ownerF, stageF]);
 
-  const update = (id, field, value) =>
-    setProjects(projects.map(p => p.id === id ? { ...p, [field]: value } : p));
+  const update = (id, field, value) => onProjectChange(id, field, value);
 
   const add = () => {
-    const id = `P-${String(projects.length + 1).padStart(3, "0")}`;
-    setProjects([...projects, {
+    const nextNumber = Math.max(
+      0,
+      ...projects.map((project) => Number(project.id?.replace(/^P-/, "")) || 0)
+    ) + 1;
+    const id = `P-${String(nextNumber).padStart(3, "0")}`;
+    onProjectAdd({
       id, client:"", workstream:"", bucket:"New", duration:"", ask:"",
       owner:"Unassigned", priority:"Medium", stage:"Qualification", status:"Open",
       health:"Yellow", nextStep:"", dueDate:"", hardDate:false, recurring:false, notes:""
-    }]);
+    });
   };
-  const remove = (id) => setProjects(projects.filter(p => p.id !== id));
+  const remove = (id) => onProjectRemove(id);
 
   return (
     <Card

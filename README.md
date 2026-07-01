@@ -53,5 +53,25 @@ suresales/
 
 ## Persistence
 
-State is saved to `localStorage` under the key `suresales_v1`.
-Use the **Export JSON** button in the sidebar to download a snapshot.
+Without Supabase credentials, state is saved to `localStorage` under the key
+`suresales_v1`. Use the **Export JSON** button in the sidebar to download a
+snapshot.
+
+With Supabase configured, signed-in users share the same Postgres-backed
+projects and target accounts. The app still keeps a local backup in
+`localStorage` if a sync attempt fails.
+
+## Supabase setup
+
+1. Create a Supabase project.
+2. Run `supabase/schema.sql` in the Supabase SQL editor.
+3. Copy `.env.example` to `.env.local`.
+4. Fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`.
+5. Confirm the `projects` and `target_accounts` tables are exposed in the
+   Supabase Data API settings.
+6. Add the app URL to Supabase Auth redirect URLs.
+7. Restart the Vite dev server.
+
+The schema enables RLS and grants table access only to authenticated users.
+For team use, keep Supabase Auth signups restricted to the people who should
+edit the tracker.

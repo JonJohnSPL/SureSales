@@ -1,8 +1,7 @@
 import { Card, Pill } from "./ui.jsx";
 
-export default function TargetAccounts({ targets, setTargets }) {
-  const update = (idx, field, val) =>
-    setTargets(targets.map((t,i) => i === idx ? { ...t, [field]: val } : t));
+export default function TargetAccounts({ targets, onTargetChange }) {
+  const update = (idx, field, val) => onTargetChange(idx, field, val);
 
   return (
     <Card title={`2026 target accounts (${targets.length})`}>

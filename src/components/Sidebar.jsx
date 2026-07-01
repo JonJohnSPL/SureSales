@@ -1,4 +1,4 @@
-import { LayoutDashboard, ListChecks, Filter, Target, Download } from "lucide-react";
+import { LayoutDashboard, ListChecks, Filter, Target, Download, LogOut } from "lucide-react";
 
 const items = [
   { id:"dashboard", label:"Dashboard", icon:LayoutDashboard },
@@ -7,7 +7,7 @@ const items = [
   { id:"targets",   label:"Target Accounts", icon:Target },
 ];
 
-export default function Sidebar({ active, onChange, onExport }) {
+export default function Sidebar({ active, onChange, onExport, user, onSignOut }) {
   return (
     <aside className="w-60 shrink-0 bg-navy text-white flex flex-col">
       <div className="px-5 py-5 border-b border-white/10">
@@ -29,6 +29,15 @@ export default function Sidebar({ active, onChange, onExport }) {
         className="m-4 flex items-center justify-center gap-2 text-sm bg-white/10 hover:bg-white/20 rounded-lg py-2">
         <Download size={14} /> Export JSON
       </button>
+      {onSignOut && (
+        <div className="px-4 pb-4">
+          {user?.email && <div className="truncate text-[11px] text-sky-200 mb-2">{user.email}</div>}
+          <button onClick={onSignOut}
+            className="w-full flex items-center justify-center gap-2 text-sm bg-white/10 hover:bg-white/20 rounded-lg py-2">
+            <LogOut size={14} /> Sign out
+          </button>
+        </div>
+      )}
     </aside>
   );
 }
