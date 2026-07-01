@@ -259,11 +259,6 @@ const ClientDetail = ({
           value={client.shortName}
           onChange={(value) => onClientChange(client.id, "shortName", value)}
         />
-        <TextField
-          label="Logo URL"
-          value={client.logoUrl}
-          onChange={(value) => onClientChange(client.id, "logoUrl", value)}
-        />
         <div className="space-y-1">
           <div className={labelClass}>Upload Logo</div>
           <div className="flex items-center gap-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3">
