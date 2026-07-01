@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { CalendarDays, CheckCircle2, Clock3, GripVertical } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  GripVertical,
+} from "lucide-react";
 import { STAGES } from "../data/seed.js";
 import { Card, Pill, priorityTone } from "./ui.jsx";
 
@@ -18,6 +24,67 @@ const sortByDueDate = (a, b) => {
   if (!a.dueDate) return 1;
   if (!b.dueDate) return -1;
   return a.dueDate.localeCompare(b.dueDate);
+};
+
+const startOfDay = (date) =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+const addDays = (date, days) =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+
+const startOfWeek = (date) => addDays(startOfDay(date), -date.getDay());
+
+const startOfMonth = (date) =>
+  new Date(date.getFullYear(), date.getMonth(), 1);
+
+const endOfMonth = (date) =>
+  new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+const dateKey = (date) => {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+};
+
+const sameDate = (a, b) => dateKey(a) === dateKey(b);
+
+const calendarTitle = (date, mode) => {
+  if (mode === "month") {
+    return date.toLocaleDateString(undefined, {
+      month: "long",
+      year: "numeric",
+    });
+  }
+
+  const weekStart = startOfWeek(date);
+  const weekEnd = addDays(weekStart, 6);
+  return `${weekStart.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  })} - ${weekEnd.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })}`;
+};
+
+const calendarDays = (date, mode) => {
+  if (mode === "week") {
+    const weekStart = startOfWeek(date);
+    return Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
+  }
+
+  const monthStart = startOfMonth(date);
+  const monthEnd = endOfMonth(date);
+  const gridStart = startOfWeek(monthStart);
+  const gridEnd = addDays(startOfWeek(monthEnd), 6);
+  const days = [];
+
+  for (let day = gridStart; day <= gridEnd; day = addDays(day, 1)) {
+    days.push(day);
+  }
+
+  return days;
 };
 
 const ProjectCard = ({
@@ -64,6 +131,8 @@ export default function Dashboard({
 }) {
   const [draggedProjectId, setDraggedProjectId] = useState("");
   const [dragOverStage, setDragOverStage] = useState("");
+  const [calendarMode, setCalendarMode] = useState("week");
+  const [calendarDate, setCalendarDate] = useState(() => startOfDay(new Date()));
   const projectById = new Map(projects.map((project) => [project.id, project]));
   const openTasks = tasks
     .filter((task) => task.status !== "Done")
@@ -73,16 +142,30 @@ export default function Dashboard({
 
   const scheduledTasks = openTasks.filter((task) => task.dueDate);
   const unscheduledTasks = openTasks.filter((task) => !task.dueDate);
-  const timelineGroups = [
-    ...scheduledTasks.map((task) => ({
-      id: task.id,
-      label: formatDate(task.dueDate),
-      tasks: [task],
-    })),
-    ...(unscheduledTasks.length
-      ? [{ id: "unscheduled", label: "Unscheduled", tasks: unscheduledTasks }]
-      : []),
-  ];
+  const tasksByDate = scheduledTasks.reduce((groups, task) => {
+    const group = groups.get(task.dueDate) || [];
+    group.push(task);
+    groups.set(task.dueDate, group);
+    return groups;
+  }, new Map());
+  const visibleCalendarDays = calendarDays(calendarDate, calendarMode);
+  const today = startOfDay(new Date());
+
+  const moveCalendar = (direction) => {
+    if (calendarMode === "week") {
+      setCalendarDate((currentDate) => addDays(currentDate, direction * 7));
+      return;
+    }
+
+    setCalendarDate(
+      (currentDate) =>
+        new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() + direction,
+          1
+        )
+    );
+  };
 
   const handleProjectDragStart = (event, projectId) => {
     setDraggedProjectId(projectId);
@@ -216,45 +299,162 @@ export default function Dashboard({
         </div>
       </Card>
 
-      <Card title="Timeline">
-        <div className="overflow-x-auto pb-1">
-          <div className="flex min-w-max items-start gap-3">
-            {timelineGroups.map((group, index) => (
-              <div key={group.id} className="w-56 shrink-0">
-                <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-                  {index === timelineGroups.length - 1 &&
-                  group.id === "unscheduled" ? (
-                    <CalendarDays size={15} />
-                  ) : (
-                    <CheckCircle2 size={15} />
-                  )}
-                  {group.label}
-                </div>
-                <div className="mt-2 border-t-2 border-sky-300 pt-2">
-                  <div className="space-y-2">
-                    {group.tasks.map((task) => (
-                      <button
-                        key={task.id}
-                        onClick={() => onProjectSelect(task.projectId)}
-                        className="w-full rounded-md border border-slate-300 bg-white p-2.5 text-left text-sm shadow-sm hover:border-sky-500"
-                      >
-                        <div className="line-clamp-2 font-semibold text-slate-950">{task.title}</div>
-                        <div className="mt-1 text-xs font-medium text-slate-600">
-                          {task.project.clientName} / {task.project.name}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-            {!timelineGroups.length && (
-              <div className="rounded-md border border-dashed border-slate-400 bg-white p-4 text-sm font-medium text-slate-600">
-                No timeline items
-              </div>
-            )}
+      <Card
+        title={
+          <div className="flex items-center gap-2">
+            <CalendarDays size={16} className="text-sky-800" />
+            Calendar
+          </div>
+        }
+        right={
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <div className="flex overflow-hidden rounded-md border border-slate-400">
+              {["week", "month"].map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setCalendarMode(mode)}
+                  className={`px-2.5 py-1 text-xs font-semibold capitalize ${
+                    calendarMode === mode
+                      ? "bg-navy text-white"
+                      : "bg-white text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => moveCalendar(-1)}
+                className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-400 bg-white text-slate-800 hover:bg-slate-100"
+                title="Previous"
+              >
+                <ChevronLeft size={15} />
+              </button>
+              <button
+                onClick={() => setCalendarDate(today)}
+                className="rounded-md border border-slate-400 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 hover:bg-slate-100"
+              >
+                Today
+              </button>
+              <button
+                onClick={() => moveCalendar(1)}
+                className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-400 bg-white text-slate-800 hover:bg-slate-100"
+                title="Next"
+              >
+                <ChevronRight size={15} />
+              </button>
+            </div>
+          </div>
+        }
+      >
+        <div className="mb-3 flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="text-base font-bold text-slate-950">
+              {calendarTitle(calendarDate, calendarMode)}
+            </div>
+            <div className="text-xs font-medium text-slate-600">
+              {scheduledTasks.length} scheduled tasks
+              {unscheduledTasks.length
+                ? ` / ${unscheduledTasks.length} unscheduled`
+                : ""}
+            </div>
           </div>
         </div>
+
+        <div className="overflow-x-auto pb-1">
+          <div className="min-w-[46rem]">
+            <div className="grid grid-cols-7 rounded-md border border-slate-300 bg-slate-200 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                <div key={day} className="border-r border-slate-300 px-2 py-1.5 last:border-r-0">
+                  {day}
+                </div>
+              ))}
+            </div>
+            <div className="mt-1 grid grid-cols-7 rounded-md border border-slate-300 bg-slate-200">
+              {visibleCalendarDays.map((day, index) => {
+                const key = dateKey(day);
+                const dayTasks = tasksByDate.get(key) || [];
+                const isToday = sameDate(day, today);
+                const isCurrentMonth = day.getMonth() === calendarDate.getMonth();
+                const visibleTaskLimit = calendarMode === "week" ? 6 : 3;
+
+                return (
+                  <div
+                    key={key}
+                    className={`min-h-28 border-r border-t border-slate-300 bg-white p-1.5 ${
+                      index < 7 ? "border-t-0" : ""
+                    } ${(index + 1) % 7 === 0 ? "border-r-0" : ""} ${
+                      calendarMode === "week" ? "min-h-44" : ""
+                    } ${
+                      isCurrentMonth || calendarMode === "week"
+                        ? ""
+                        : "bg-slate-50 text-slate-400"
+                    }`}
+                  >
+                    <div className="mb-1 flex items-center justify-between gap-1">
+                      <span
+                        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                          isToday ? "bg-navy text-white" : "text-slate-700"
+                        }`}
+                      >
+                        {day.getDate()}
+                      </span>
+                      {dayTasks.length > 0 && (
+                        <span className="text-[11px] font-semibold text-slate-500">
+                          {dayTasks.length}
+                        </span>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      {dayTasks.slice(0, visibleTaskLimit).map((task) => (
+                        <button
+                          key={task.id}
+                          onClick={() => onProjectSelect(task.projectId)}
+                          className="w-full rounded border border-slate-300 bg-sky-50 px-1.5 py-1 text-left text-[11px] leading-4 text-slate-950 hover:border-sky-600 hover:bg-sky-100"
+                        >
+                          <div className="truncate font-semibold">{task.title}</div>
+                          <div className="truncate text-slate-600">
+                            {task.project.clientName}
+                          </div>
+                        </button>
+                      ))}
+                      {dayTasks.length > visibleTaskLimit && (
+                        <div className="text-[11px] font-semibold text-slate-500">
+                          +{dayTasks.length - visibleTaskLimit} more
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {unscheduledTasks.length > 0 && (
+          <div className="mt-3 rounded-md border border-slate-300 bg-slate-50 p-2.5">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+              Unscheduled
+            </div>
+            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {unscheduledTasks.map((task) => (
+                <button
+                  key={task.id}
+                  onClick={() => onProjectSelect(task.projectId)}
+                  className="rounded-md border border-slate-300 bg-white p-2 text-left text-sm shadow-sm hover:border-sky-500"
+                >
+                  <div className="line-clamp-2 font-semibold text-slate-950">
+                    {task.title}
+                  </div>
+                  <div className="mt-1 text-xs font-medium text-slate-600">
+                    {task.project.clientName} / {task.project.name}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );
