@@ -2,6 +2,7 @@ create table if not exists public.clients (
   id text primary key,
   name text not null default '',
   short_name text not null default '',
+  logo_url text not null default '',
   status text not null default 'Prospect',
   category text not null default '',
   region text not null default '',
@@ -11,6 +12,8 @@ create table if not exists public.clients (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.clients add column if not exists logo_url text not null default '';
 
 create table if not exists public.projects (
   id text primary key,

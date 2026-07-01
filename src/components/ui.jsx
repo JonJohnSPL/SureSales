@@ -2,7 +2,7 @@ export const Card = ({ title, children, right }) => (
   <div className="bg-white border border-slate-200 rounded-lg shadow-sm">
     {title && (
       <div className="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
-        <h3 className="font-semibold text-slate-800">{title}</h3>
+        <div className="font-semibold text-slate-800">{title}</div>
         {right}
       </div>
     )}

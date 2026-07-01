@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import {
   BUCKETS,
+  CLIENT_STATUSES,
   HEALTHS,
   OWNERS,
   PRIORITIES,
@@ -28,6 +29,69 @@ import {
 
 const selectClass =
   "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100";
+
+const clientInitials = (client) =>
+  (client?.shortName || client?.name || "?")
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 3)
+    .toUpperCase();
+
+const ClientLogo = ({ client, size = "md" }) => {
+  const sizes = {
+    sm: "h-10 w-10 text-sm",
+    md: "h-14 w-14 text-lg",
+    lg: "h-20 w-20 text-2xl",
+  };
+
+  return (
+    <div
+      className={`${sizes[size]} shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100`}
+    >
+      {client.logoUrl ? (
+        <img
+          src={client.logoUrl}
+          alt={`${client.name} logo`}
+          className="h-full w-full object-contain p-1.5"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-sky-50 font-semibold text-sky-800">
+          {clientInitials(client)}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const clientStatusTone = (status) =>
+  ({
+    Active: "green",
+    Prospect: "navy",
+    Dormant: "slate",
+    "At Risk": "yellow",
+    Closed: "red",
+  })[status] || "slate";
+
+const VisualSelectField = ({ label, value, options, onChange, tone }) => (
+  <label className="space-y-1">
+    <div className={labelClass}>{label}</div>
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <Pill tone={tone(value)}>{value}</Pill>
+      </div>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={selectClass}
+      >
+        {options.map((option) => (
+          <option key={option}>{option}</option>
+        ))}
+      </select>
+    </div>
+  </label>
+);
 
 const TextField = ({ label, value, onChange, textarea = false }) => (
   <label className="space-y-1">
@@ -76,7 +140,6 @@ const ProjectMiniCard = ({ project, onSelect, onRemove }) => (
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <Pill tone={priorityTone(project.priority)}>{project.priority}</Pill>
-        <Pill tone={healthTone(project.health)}>{project.health}</Pill>
         <Pill tone="slate">{project.stage}</Pill>
       </div>
       {project.currentAsk && (
@@ -103,16 +166,23 @@ const ClientStack = ({ client, projects, onClientSelect, onProjectSelect, onProj
     >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <Building2 size={18} className="text-sky-700" />
-            <h3 className="font-semibold text-slate-900">{client.name}</h3>
+          <div className="flex items-center gap-3">
+            <ClientLogo client={client} size="sm" />
+            <div>
+              <div className="flex items-center gap-2">
+                <Building2 size={18} className="text-sky-700" />
+                <h3 className="font-semibold text-slate-900">{client.name}</h3>
+              </div>
+              <div className="mt-1 text-xs text-slate-500">
+                {client.shortName}
+              </div>
+            </div>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
-            <Pill tone={client.status === "Active" ? "green" : "navy"}>
-              {client.status}
-            </Pill>
+            <Pill tone={clientStatusTone(client.status)}>{client.status}</Pill>
             <Pill tone="slate">{client.category || "Uncategorized"}</Pill>
             <Pill tone={healthTone(client.health)}>{client.health}</Pill>
+            <Pill tone={priorityTone(client.priority)}>{client.priority}</Pill>
           </div>
         </div>
         <Pill tone="slate">{projects.length} projects</Pill>
@@ -157,9 +227,20 @@ const ClientDetail = ({
     </button>
 
     <Card
-      title={client.name}
+      title={
+        <div className="flex items-center gap-3">
+          <ClientLogo client={client} size="md" />
+          <div>
+            <div>{client.name}</div>
+            <div className="mt-1 text-xs font-normal text-slate-500">
+              {client.category || "Uncategorized"}
+            </div>
+          </div>
+        </div>
+      }
       right={
         <div className="flex gap-2">
+          <Pill tone={clientStatusTone(client.status)}>{client.status}</Pill>
           <Pill tone={healthTone(client.health)}>{client.health}</Pill>
           <Pill tone={priorityTone(client.priority)}>{client.priority}</Pill>
         </div>
@@ -177,8 +258,14 @@ const ClientDetail = ({
           onChange={(value) => onClientChange(client.id, "shortName", value)}
         />
         <TextField
+          label="Logo URL"
+          value={client.logoUrl}
+          onChange={(value) => onClientChange(client.id, "logoUrl", value)}
+        />
+        <SelectField
           label="Client Status"
           value={client.status}
+          options={CLIENT_STATUSES}
           onChange={(value) => onClientChange(client.id, "status", value)}
         />
         <TextField
@@ -186,17 +273,19 @@ const ClientDetail = ({
           value={client.category}
           onChange={(value) => onClientChange(client.id, "category", value)}
         />
-        <SelectField
+        <VisualSelectField
           label="Health"
           value={client.health}
           options={HEALTHS}
           onChange={(value) => onClientChange(client.id, "health", value)}
+          tone={healthTone}
         />
-        <SelectField
+        <VisualSelectField
           label="Priority"
           value={client.priority}
           options={PRIORITIES}
           onChange={(value) => onClientChange(client.id, "priority", value)}
+          tone={priorityTone}
         />
         <TextField
           label="Region / Area"
@@ -266,16 +355,25 @@ const ProjectDetail = ({
         </div>
       }
     >
+      {client && (
+        <div className="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <div className={labelClass}>Client</div>
+          <div className="mt-2 flex items-center gap-3">
+            <ClientLogo client={client} size="sm" />
+            <div>
+              <div className="font-semibold text-slate-900">{client.name}</div>
+              <div className="mt-1 text-xs text-slate-500">
+                {client.status} / {client.category || "Uncategorized"}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="grid gap-4 md:grid-cols-2">
         <TextField
           label="Project Name"
           value={project.name}
           onChange={(value) => onProjectChange(project.id, "name", value)}
-        />
-        <TextField
-          label="Client"
-          value={project.clientName}
-          onChange={(value) => onProjectChange(project.id, "clientName", value)}
         />
         <SelectField
           label="Bucket"
@@ -300,12 +398,6 @@ const ProjectDetail = ({
           value={project.priority}
           options={PRIORITIES}
           onChange={(value) => onProjectChange(project.id, "priority", value)}
-        />
-        <SelectField
-          label="Health"
-          value={project.health}
-          options={HEALTHS}
-          onChange={(value) => onProjectChange(project.id, "health", value)}
         />
         <SelectField
           label="Owner"
