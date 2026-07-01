@@ -18,7 +18,14 @@ import {
 
 const LOGO_BUCKET = "client-logos";
 const LOGO_MAX_BYTES = 5 * 1024 * 1024;
-const LOGO_MIME_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+const LOGO_MIME_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml",
+  "text/xml",
+];
 
 const seedData = {
   clients: SEED_CLIENTS,
@@ -156,7 +163,7 @@ export default function App() {
 
     if (!LOGO_MIME_TYPES.includes(file.type)) {
       setSyncState("error");
-      setSyncError("Logo must be a PNG, JPEG, WebP, or GIF image.");
+      setSyncError("Logo must be a PNG, JPEG, WebP, GIF, or SVG image.");
       return;
     }
 

@@ -66,7 +66,7 @@ projects into the new shape and creates initial tasks from each next step.
 5. Confirm the `clients`, `projects`, and `project_tasks` tables are exposed in
    the Supabase Data API settings.
 6. Confirm the `client-logos` Storage bucket exists; `schema.sql` creates it
-   with authenticated upload policies for PNG, JPEG, WebP, and GIF logos.
+   with authenticated upload policies for PNG, JPEG, WebP, GIF, and SVG logos.
 7. Add the app URL to Supabase Auth redirect URLs.
 8. Restart the Vite dev server.
 

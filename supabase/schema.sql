@@ -173,7 +173,14 @@ values (
   'client-logos',
   true,
   5242880,
-  array['image/png', 'image/jpeg', 'image/webp', 'image/gif']::text[]
+  array[
+    'image/png',
+    'image/jpeg',
+    'image/webp',
+    'image/gif',
+    'image/svg+xml',
+    'text/xml'
+  ]::text[]
 )
 on conflict (id) do update
 set
