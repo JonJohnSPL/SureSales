@@ -166,3 +166,42 @@ using (true);
 grant select, insert, update, delete on public.clients to authenticated;
 grant select, insert, update, delete on public.projects to authenticated;
 grant select, insert, update, delete on public.project_tasks to authenticated;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'client-logos',
+  'client-logos',
+  true,
+  5242880,
+  array['image/png', 'image/jpeg', 'image/webp', 'image/gif']::text[]
+)
+on conflict (id) do update
+set
+  public = true,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Public can read client logos" on storage.objects;
+create policy "Public can read client logos"
+on storage.objects for select
+to public
+using (bucket_id = 'client-logos');
+
+drop policy if exists "Team can upload client logos" on storage.objects;
+create policy "Team can upload client logos"
+on storage.objects for insert
+to authenticated
+with check (bucket_id = 'client-logos');
+
+drop policy if exists "Team can update client logos" on storage.objects;
+create policy "Team can update client logos"
+on storage.objects for update
+to authenticated
+using (bucket_id = 'client-logos')
+with check (bucket_id = 'client-logos');
+
+drop policy if exists "Team can delete client logos" on storage.objects;
+create policy "Team can delete client logos"
+on storage.objects for delete
+to authenticated
+using (bucket_id = 'client-logos');

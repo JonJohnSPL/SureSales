@@ -6,6 +6,7 @@ import {
   FolderPlus,
   Search,
   Trash2,
+  Upload,
 } from "lucide-react";
 import {
   BUCKETS,
@@ -213,6 +214,7 @@ const ClientDetail = ({
   projects,
   onBack,
   onClientChange,
+  onClientLogoUpload,
   onProjectSelect,
   onProjectAdd,
   onProjectRemove,
@@ -262,6 +264,26 @@ const ClientDetail = ({
           value={client.logoUrl}
           onChange={(value) => onClientChange(client.id, "logoUrl", value)}
         />
+        <div className="space-y-1">
+          <div className={labelClass}>Upload Logo</div>
+          <div className="flex items-center gap-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3">
+            <ClientLogo client={client} size="sm" />
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-navy px-3 py-2 text-sm font-medium text-white hover:bg-slate-800">
+              <Upload size={15} />
+              Upload
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="sr-only"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  onClientLogoUpload(client.id, file);
+                  event.target.value = "";
+                }}
+              />
+            </label>
+          </div>
+        </div>
         <SelectField
           label="Client Status"
           value={client.status}
@@ -517,6 +539,7 @@ export default function ProjectTracker({
   route,
   onNavigate,
   onClientChange,
+  onClientLogoUpload,
   onProjectAdd,
   onProjectChange,
   onProjectRemove,
@@ -564,6 +587,7 @@ export default function ProjectTracker({
         projects={clientProjects}
         onBack={() => onNavigate({ name: "projects" })}
         onClientChange={onClientChange}
+        onClientLogoUpload={onClientLogoUpload}
         onProjectSelect={(projectId) => onNavigate({ name: "project", projectId })}
         onProjectAdd={onProjectAdd}
         onProjectRemove={onProjectRemove}

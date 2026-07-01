@@ -16,6 +16,10 @@ import {
   saveTask,
 } from "./lib/suresalesRepository.js";
 
+const LOGO_BUCKET = "client-logos";
+const LOGO_MAX_BYTES = 5 * 1024 * 1024;
+const LOGO_MIME_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+
 const seedData = {
   clients: SEED_CLIENTS,
   projects: SEED_PROJECTS,
@@ -142,6 +146,66 @@ export default function App() {
 
     setClients(nextClients);
     persistRemote(() => saveClient(changedClient));
+  };
+
+  const handleClientLogoUpload = async (id, file) => {
+    if (!file) return;
+
+    const client = clients.find((candidate) => candidate.id === id);
+    if (!client) return;
+
+    if (!LOGO_MIME_TYPES.includes(file.type)) {
+      setSyncState("error");
+      setSyncError("Logo must be a PNG, JPEG, WebP, or GIF image.");
+      return;
+    }
+
+    if (file.size > LOGO_MAX_BYTES) {
+      setSyncState("error");
+      setSyncError("Logo must be 5 MB or smaller.");
+      return;
+    }
+
+    const updateLogo = (logoUrl) => {
+      const changedClient = { ...client, logoUrl };
+      setClients((currentClients) =>
+        currentClients.map((candidate) =>
+          candidate.id === id ? changedClient : candidate
+        )
+      );
+      persistRemote(() => saveClient(changedClient));
+    };
+
+    if (!isSupabaseConfigured || !user) {
+      const reader = new FileReader();
+      reader.onload = () => updateLogo(reader.result || "");
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    setSyncState("saving");
+    setSyncError("");
+
+    try {
+      const extension = file.name.split(".").pop()?.toLowerCase() || "png";
+      const safeName = `${Date.now()}.${extension}`;
+      const path = `${id}/${safeName}`;
+      const { error: uploadError } = await supabase.storage
+        .from(LOGO_BUCKET)
+        .upload(path, file, {
+          cacheControl: "3600",
+          contentType: file.type || "image/png",
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from(LOGO_BUCKET).getPublicUrl(path);
+      updateLogo(data.publicUrl);
+    } catch (error) {
+      setStorageSource("local");
+      setSyncState("error");
+      setSyncError(error.message || "Could not upload client logo.");
+    }
   };
 
   const handleProjectChange = (id, field, value) => {
@@ -299,6 +363,7 @@ export default function App() {
               route={route}
               onNavigate={setRoute}
               onClientChange={handleClientChange}
+              onClientLogoUpload={handleClientLogoUpload}
               onProjectAdd={handleProjectAdd}
               onProjectChange={handleProjectChange}
               onProjectRemove={handleProjectRemove}

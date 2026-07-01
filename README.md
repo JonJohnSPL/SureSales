@@ -65,8 +65,10 @@ projects into the new shape and creates initial tasks from each next step.
 4. Fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`.
 5. Confirm the `clients`, `projects`, and `project_tasks` tables are exposed in
    the Supabase Data API settings.
-6. Add the app URL to Supabase Auth redirect URLs.
-7. Restart the Vite dev server.
+6. Confirm the `client-logos` Storage bucket exists; `schema.sql` creates it
+   with authenticated upload policies for PNG, JPEG, WebP, and GIF logos.
+7. Add the app URL to Supabase Auth redirect URLs.
+8. Restart the Vite dev server.
 
 The schema enables RLS and grants table access only to authenticated users. For
 team use, keep Supabase Auth signups restricted to the people who should edit
