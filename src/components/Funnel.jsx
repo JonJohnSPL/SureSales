@@ -18,7 +18,7 @@ export default function Funnel({ projects }) {
             </thead>
             <tbody>
               {FUNNEL_ROWS.map((r) => {
-                const t = r.totalOverride ?? ((r.producers ?? 0) + (r.midstream ?? 0)) || null;
+                const t = r.totalOverride ?? (((r.producers ?? 0) + (r.midstream ?? 0)) || null);
                 const pct = t ? Math.round((t/total)*100) : null;
                 return (
                   <tr key={r.stage} className="border-t border-slate-200">
