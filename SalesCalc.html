@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>SPL Margin Calculator</title>
+https://unpkg.com/react@18/umd/react.production.min.js
+https://unpkg.com/react-dom@18/umd/react-dom.production.min.js
+alone/babel.min.js"></script>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#111827; --card:#1f2937; --line:#334155;
+    --text:#e5e7eb; --muted:#94a3b8; --accent:#3b82f6; --good:#10b981;
+    --bad:#ef4444; --warn:#f59e0b; --input:#0b1220; --chip:#1e293b;
+  }
+  *{box-sizing:border-box}
+  html,body,#root{height:100%}
+  body{margin:0;background:linear-gradient(180deg,#0b1220,#0f172a);color:var(--text);
+       font:14px/1.4 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;
+         background:#0b1220;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+  header h1{font-size:16px;margin:0;letter-spacing:.3px}
+  header .sub{color:var(--muted);font-size:12px}
+  header .actions{display:flex;gap:8px}
+  button{background:var(--accent);color:#fff;border:0;border-radius:6px;padding:8px 12px;
+         cursor:pointer;font-weight:600;font-size:12px}
+  button.secondary{background:#334155}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+  button.danger{background:var(--bad)}
+  main{padding:16px 20px 40px;max-width:1500px;margin:0 auto}
+  .tabs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 14px}
+  .tab{padding:6px 12px;border-radius:999px;background:var(--chip);border:1px solid var(--line);
+       cursor:pointer;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .tab .x{opacity:.6;font-size:11px}
+  .tab .x:hover{opacity:1;color:#fecaca}
+  .grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+  @media(max-width:1100px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;
+        margin-bottom:14px}
+  .card h3{margin:0 0 10px;font-size:13px;letter-spacing:.3px;text-transform:uppercase;color:#cbd5e1}
+  .row{display:grid;grid-template-columns:1.6fr .8fr .8fr .8fr .8fr;gap:8px;align-items:center;
+       padding:5px 0;border-bottom:1px dashed #24314a}
+  .row.header{color:var(--muted);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:4px}
+  .row .lbl{color:#cbd5e1}
+  .row .num{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+  .row .num.strong{color:#e5e7eb;font-weight:600}
+  input[type=number],input[type=text],select{width:100%;background:var(--input);border:1px solid var(--line);
+    color:var(--text);border-radius:6px;padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums}
+  input[type=text].name{text-align:left}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .kpi{background:#0b1220;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+  .kpi .k{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  .kpi .v{font-size:18px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+  .v.good{color:var(--good)} .v.bad{color:var(--bad)}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;
+        background:#0b1220;border:1px solid var(--line);color:var(--muted)}
+  .foot{color:var(--muted);font-size:12px;margin-top:6px}
+  .toolbar{display:flex;gap:8px;align-items:center;margin:6px 0 12px;flex-wrap:wrap}
+  .sep{height:1px;background:var(--line);margin:10px 0}
+  details summary{cursor:pointer;color:#cbd5e1;font-weight:600;margin-bottom:6px}
+  .stack{display:grid;gap:6px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .field{display:flex;flex-direction:column;gap:3px}
+  .field label{font-size:11px;color:var(--muted)}
+  .scen-summary{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  .disclaimer{color:var(--muted);font-size:11px;margin-top:12px;line-height:1.5}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .logo{width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);
+               display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const {useState, useMemo, useEffect} = React;
+
+// ---------- Helpers ----------
+const fmt$ = (n)=> (isFinite(n)? n:0).toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:2});
+const fmtP = (n)=> `${((isFinite(n)?n:0)*100).toFixed(2)}%`;
+const fmtN = (n)=> (isFinite(n)?n:0).toLocaleString(undefined,{maximumFractionDigits:2});
+const num = (v)=> { const x = parseFloat(v); return isFinite(x)?x:0; };
+const uid = ()=> Math.random().toString(36).slice(2,9);
+
+// ---------- Default Task ----------
+const emptyTask = (name='New Task')=>({
+  id: uid(),
+  name,
+  capex: 0,
+  workingDays: 200,
+  paybackPremium: 0.0025,
+  utilization: 0.80,
+  applyUtilOT: false,
+  t1Rate: 0, t1Charge: 0, t1Hours: 0, t1OT: 0,
+  t2Rate: 0, t2Charge: 0, t2Hours: 0, t2OT: 0,
+  mileCost: 1.25, mileCharge: 0, miles: 0,
+  otherCost: 0, otherCharge: 0,
+  perMeterCharge: 0,
+  numTasks: 1,
+});
+
+// ---------- Preset Scenarios (from workbook) ----------
+const presets = {
+  'Standard Gas Tech': {workingDays:225, paybackPremium:0.0025, utilization:0.80},
+  'Gas Lead':          {workingDays:200, paybackPremium:0.0025, utilization:0.80},
+  'PCP':               {workingDays:200, paybackPremium:0.0025, utilization:0.80},
+  'Closed Loop':       {workingDays:200, paybackPremium:0.0025, utilization:0.80},
+  'Live Oil':          {workingDays:200, paybackPremium:0.0025, utilization:0.80},
+  '5-Gal Work':        {workingDays:200, paybackPremium:0.0025, utilization:0.80},
+  '30-Gal Work':       {workingDays:12,  paybackPremium:0.0050, utilization:0.80,
+                        capex:600000, t1Rate:35, t1Hours:5, miles:60, mileCharge:1.65,
+                        perMeterCharge:477, numTasks:3},
+};
+
+// ---------- Math ----------
+function calc(t){
+  const equipDayCost   = t.workingDays>0 ? t.capex / t.workingDays : 0;
+  const equipDayBill   = equipDayCost * (1 + num(t.paybackPremium));
+  const equipDayMargin = equipDayBill - equipDayCost;
+  const equipDayMarginP= equipDayBill>0 ? equipDayMargin/equipDayBill : 0;
+
+  const utilDiv = t.utilization>0 ? t.utilization : 1;
+
+  const t1RegCost  = (t.t1Rate * t.t1Hours) / utilDiv;
+  const t1OTCost   = (t.t1Rate * 1.5) * t.t1OT / (t.applyUtilOT? utilDiv : 1);
+  const t1RegBill  = t.t1Charge * t.t1Hours;
+  const t1OTBill   = t.t1Charge * 1.5 * t.t1OT;
+
+  const t2RegCost  = (t.t2Rate * t.t2Hours) / utilDiv;
+  const t2OTCost   = (t.t2Rate * 1.5) * t.t2OT / (t.applyUtilOT? utilDiv : 1);
+  const t2RegBill  = t.t2Charge * t.t2Hours;
+  const t2OTBill   = t.t2Charge * 1.5 * t.t2OT;
+
+  const mileCost   = t.mileCost   * t.miles;
+  const mileBill   = t.mileCharge * t.miles;
+  const otherCost  = num(t.otherCost);
+  const otherBill  = num(t.otherCharge);
+  const perMeterBill = num(t.perMeterCharge) * (t.numTasks||1);
+
+  const taskCost  = t1RegCost + t1OTCost + t2RegCost + t2OTCost + mileCost + otherCost;
+  const taskBill  = t1RegBill + t1OTBill + t2RegBill + t2OTBill + mileBill + otherBill + perMeterBill;
+  const taskMarg  = taskBill - taskCost;
+  const taskMargP = taskBill>0 ? taskMarg/taskBill : 0;
+
+  const projCost  = taskCost + equipDayCost;
+  const projBill  = taskBill + equipDayBill;
+  const projMarg  = projBill - projCost;
+  const projMargP = projBill>0 ? projMarg/projBill : 0;
+
+  const n = t.numTasks>0 ? t.numTasks : 1;
+  const perCost = projCost / n;
+  const perBill = projBill / n;
+  const perMarg = projMarg / n;
+  const perMargP= perBill>0 ? perMarg/perBill : 0;
+
+  const dailyMargin = projMarg;
+  const annualMargin = dailyMargin * (t.workingDays||0);
+  const paybackMonths = annualMargin>0 ? (t.capex / annualMargin) * 12 : 0;
+
+  return {
+    equipDayCost, equipDayBill, equipDayMargin, equipDayMarginP,
+    t1RegCost,t1OTCost,t1RegBill,t1OTBill,
+    t2RegCost,t2OTCost,t2RegBill,t2OTBill,
+    mileCost,mileBill,otherCost,otherBill,perMeterBill,
+    taskCost,taskBill,taskMarg,taskMargP,
+    projCost,projBill,projMarg,projMargP,
+    perCost,perBill,perMarg,perMargP,
+    annualMargin, paybackMonths,
+  };
+}
+
+function InputRow({label, value, onChange, kind='num', tip, computedCost, computedBill, computedMargin}){
+  return (
+    <div className="row">
+      <div className="lbl">{label}{tip && <span className="pill" style={{marginLeft:8}}>{tip}</span>}</div>
+      <div>
+        {kind==='num' && <input type="number" step="any" value={value} onChange={e=>onChange(num(e.target.value))} />}
+        {kind==='pct' && <input type="number" step="any" value={value*100} onChange={e=>onChange(num(e.target.value)/100)} />}
+        {kind==='bool' && (
+          <select value={value?'Yes':'No'} onChange={e=>onChange(e.target.value==='Yes')}>
+            <option>No</option><option>Yes</option>
+          </select>
+        )}
+      </div>
+      <div className="num">{computedCost!==undefined? fmt$(computedCost):''}</div>
+      <div className="num">{computedBill!==undefined? fmt$(computedBill):''}</div>
+      <div className="num">{computedMargin!==undefined? fmt$(computedMargin):''}</div>
+    </div>
+  );
+}
+
+function TaskEditor({task, update, remove, duplicate}){
+  const r = useMemo(()=>calc(task),[task]);
+  const set = (k)=>(v)=>update({...task, v});
+  return (
+    <div className="grid">
+      <div>
+        <div className="card">
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+            <div style={{display:'flex',gap:8,alignItems:'center',flex:1}}>
+              <input type="text" className="name" style={{maxWidth:340}} value={task.name}
+                     onChange={e=>update({...task,name:e.target.value})}/>
+              <select onChange={e=>{
+                const p=presets[e.target.value]; if(p) update({...task,...p, name:e.target.value});
+              }} defaultValue="">
+                <option value="">Load preset…</option>
+                {Object.keys(presets).map(k=><option key={k}>{k}</option>)}
+              </select>
+            </div>
+            <div style={{display:'flex',gap:6}}>
+              <button className="ghost" onClick={duplicate}>Duplicate</button>
+              <button className="danger" onClick={remove}>Delete</button>
+            </div>
+          </div>
+
+          <h3>Equipment Inputs — Truck, Tools, Equipment</h3>
+          <div className="row header">
+            <div>Input</div><div style={{textAlign:'right'}}>Value</div>
+            <div style={{textAlign:'right'}}>Cost/day</div>
+            <div style={{textAlign:'right'}}>Billable/day</div>
+            <div style={{textAlign:'right'}}>Margin $</div>
+          </div>
+          <InputRow label="Fixed equipment cost (CAPEX)" value={task.capex} onChange={set('capex')}/>
+          <InputRow label="Working days per year" value={task.workingDays} onChange={set('workingDays')}/>
+          <InputRow label="Payback premium on equipment" value={task.paybackPremium} kind='pct' onChange={set('paybackPremium')}/>
+          <div className="row">
+            <div className="lbl"><strong>Equipment per day</strong></div>
+            <div className="num"></div>
+            <div className="num strong">{fmt$(r.equipDayCost)}</div>
+            <div className="num strong">{fmt$(r.equipDayBill)}</div>
+            <div className="num strong">{fmt$(r.equipDayMargin)}</div>
+          </div>
+          <InputRow label="Utilization %" value={task.utilization} kind='pct' onChange={set('utilization')}/>
+          <InputRow label="Apply utilization to OT?" value={task.applyUtilOT} kind='bool' onChange={set('applyUtilOT')}/>
+
+          <h3 style={{marginTop:16}}>Technician & Mileage</h3>
+          <div className="row header">
+            <div>Input</div><div style={{textAlign:'right'}}>Value</div>
+            <div style={{textAlign:'right'}}>Cost</div>
+            <div style={{textAlign:'right'}}>Billable</div>
+            <div style={{textAlign:'right'}}>Margin $</div>
+          </div>
+
+          <InputRow label="Tech I hourly rate ($/hr)"    value={task.t1Rate}   onChange={set('t1Rate')}/>
+          <InputRow label="Tech I CHARGE rate ($/hr)"    value={task.t1Charge} onChange={set('t1Charge')}/>
+          <InputRow label="Tech I Reg hours"             value={task.t1Hours}  onChange={set('t1Hours')}
+                    computedCost={r.t1RegCost} computedBill={r.t1RegBill} computedMargin={r.t1RegBill - r.t1RegCost}/>
+          <InputRow label="Tech I OT hours (1.5x)"       value={task.t1OT}     onChange={set('t1OT')}
+                    computedCost={r.t1OTCost}  computedBill={r.t1OTBill}  computedMargin={r.t1OTBill  - r.t1OTCost}/>
+
+          <InputRow label="Tech II hourly rate ($/hr)"   value={task.t2Rate}   onChange={set('t2Rate')}/>
+          <InputRow label="Tech II CHARGE rate ($/hr)"   value={task.t2Charge} onChange={set('t2Charge')}/>
+          <InputRow label="Tech II Reg hours"            value={task.t2Hours}  onChange={set('t2Hours')}
+                    computedCost={r.t2RegCost} computedBill={r.t2RegBill} computedMargin={r.t2RegBill - r.t2RegCost}/>
+          <InputRow label="Tech II OT hours (1.5x)"      value={task.t2OT}     onChange={set('t2OT')}
+                    computedCost={r.t2OTCost}  computedBill={r.t2OTBill}  computedMargin={r.t2OTBill  - r.t2OTCost}/>
+
+          <InputRow label="Mileage cost rate ($/mile)"   value={task.mileCost}   onChange={set('mileCost')}/>
+          <InputRow label="Mileage CHARGE rate ($/mile)" value={task.mileCharge} onChange={set('mileCharge')}/>
+          <InputRow label="Total miles for the task"     value={task.miles}      onChange={set('miles')}
+                    computedCost={r.mileCost} computedBill={r.mileBill} computedMargin={r.mileBill - r.mileCost}/>
+
+          <InputRow label="Other daily operation costs (Cost)"    value={task.otherCost}   onChange={set('otherCost')}
+                    computedCost={r.otherCost} computedBill={r.otherBill} computedMargin={r.otherBill - r.otherCost}/>
+          <InputRow label="Other daily operation costs (Billable)" value={task.otherCharge} onChange={set('otherCharge')}/>
+
+          <InputRow label="Per Meter Billable Rate ($/meter)" value={task.perMeterCharge} onChange={set('perMeterCharge')}
+                    computedBill={r.perMeterBill}/>
+        </div>
+
+        <div className="card">
+          <h3>Project Inputs</h3>
+          <div className="two">
+            <div className="field">
+              <label>Number of tasks in project</label>
+              <input type="number" step="1" value={task.numTasks}
+                     onChange={e=>update({...task,numTasks:Math.max(1,num(e.target.value))})}/>
+            </div>
+          </div>
+        </div>
+
+        <div className="disclaimer">
+          Enter values in the Value column. Cost, Billable, and Margin update live.
+          Per-meter/unit rate = Project Cost / Number of tasks (equipment amortized across tasks).
+        </div>
+      </div>
+
+      <div>
+        <div className="card">
+          <h3>Task / Day Totals</h3>
+          <div className="kpis">
+            <div className="kpi"><div className="k">Total Cost</div><div className="v">{fmt$(r.taskCost)}</div></div>
+            <div className="kpi"><div className="k">Total Billable</div><div className="v">{fmt$(r.taskBill)}</div></div>
+            <div className="kpi"><div className="k">Margin $</div>
+              <div className={"v "+(r.taskMarg>=0?'good':'bad')}>{fmt$(r.taskMarg)}</div></div>
+            <div className="kpi"><div className="k">Margin %</div>
+              <div className={"v "+(r.taskMargP>=0?'good':'bad')}>{fmtP(r.taskMargP)}</div></div>
+          </div>
+          <div className="foot">Tech + Mileage + Other (no equipment).</div>
+        </div>
+
+        <div className="card">
+          <h3>Project Totals / Day (incl. Equipment)</h3>
+          <div className="kpis">
+            <div className="kpi"><div className="k">Project Cost</div><div className="v">{fmt$(r.projCost)}</div></div>
+            <div className="kpi"><div className="k">Project Billable</div><div className="v">{fmt$(r.projBill)}</div></div>
+            <div className="kpi"><div className="k">Project Margin $</div>
+              <div className={"v "+(r.projMarg>=0?'good':'bad')}>{fmt$(r.projMarg)}</div></div>
+            <div className="kpi"><div className="k">Project Margin %</div>
+              <div className={"v "+(r.projMargP>=0?'good':'bad')}>{fmtP(r.projMargP)}</div></div>
+          </div>
+        </div>
+
+        <div className="card">
+          <h3>Per Meter / Unit Rate</h3>
+          <div className="kpis">
+            <div className="kpi"><div className="k">Cost / meter</div><div className="v">{fmt$(r.perCost)}</div></div>
+            <div className="kpi"><div className="k">Billable / meter</div><div className="v">{fmt$(r.perBill)}</div></div>
+            <div className="kpi"><div className="k">Margin $ / meter</div>
+              <div className={"v "+(r.perMarg>=0?'good':'bad')}>{fmt$(r.perMarg)}</div></div>
+            <div className="kpi"><div className="k">Margin % / meter</div>
+              <div className={"v "+(r.perMargP>=0?'good':'bad')}>{fmtP(r.perMargP)}</div></div>
+          </div>
+        </div>
+
+        <div className="card">
+          <h3>Annualized & Payback</h3>
+          <div className="kpis">
+            <div className="kpi"><div className="k">Annual Gross Margin</div>
+              <div className={"v "+(r.annualMargin>=0?'good':'bad')}>{fmt$(r.annualMargin)}</div></div>
+            <div className="kpi"><div className="k">Payback (months)</div>
+              <div className="v">{r.paybackMonths>0? fmtN(r.paybackMonths):'—'}</div></div>
+          </div>
+          <div className="foot">Annual Margin = Daily Project Margin × Working days. Target payback &lt; 24 months.</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Summary({tasks}){
+  const rows = tasks.map(t=>({name:t.name, r:calc(t), t}));
+  const tot = rows.reduce((a,{r,t})=>{
+    a.cost += r.projCost; a.bill += r.projBill; a.marg += r.projMarg;
+    a.capex += num(t.capex);
+    a.annualMarg += r.annualMargin;
+    return a;
+  },{cost:0,bill:0,marg:0,capex:0,annualMarg:0});
+  const totMargP = tot.bill>0 ? tot.marg/tot.bill : 0;
+  const payback = tot.annualMarg>0 ? (tot.capex / tot.annualMarg)*12 : 0;
+
+  return (
+    <div className="card scen-summary">
+      <h3>Scenario Summary (All Tasks)</h3>
+      <table>
+        <thead><tr>
+          <th>Task</th><th>Cost/Day</th><th>Billable/Day</th><th>Margin $/Day</th><th>Margin %</th>
+          <th>CAPEX</th><th>Annual Margin</th><th>Payback (mo)</th>
+        </tr></thead>
+        <tbody>
+          {rows.map(({name,r,t})=>(
+            <tr key={name+t.id}>
+              <td>{name}</td>
+              <td>{fmt$(r.projCost)}</td>
+              <td>{fmt$(r.projBill)}</td>
+              <td style={{color:r.projMarg>=0?'#10b981':'#ef4444'}}>{fmt$(r.projMarg)}</td>
+              <td style={{color:r.projMargP>=0?'#10b981':'#ef4444'}}>{fmtP(r.projMargP)}</td>
+              <td>{fmt$(num(t.capex))}</td>
+              <td style={{color:r.annualMargin>=0?'#10b981':'#ef4444'}}>{fmt$(r.annualMargin)}</td>
+              <td>{r.paybackMonths>0? fmtN(r.paybackMonths):'—'}</td>
+            </tr>
+          ))}
+          <tr style={{background:'#0b1220',fontWeight:700}}>
+            <td>TOTAL</td>
+            <td>{fmt$(tot.cost)}</td>
+            <td>{fmt$(tot.bill)}</td>
+            <td style={{color:tot.marg>=0?'#10b981':'#ef4444'}}>{fmt$(tot.marg)}</td>
+            <td style={{color:totMargP>=0?'#10b981':'#ef4444'}}>{fmtP(totMargP)}</td>
+            <td>{fmt$(tot.capex)}</td>
+            <td style={{color:tot.annualMarg>=0?'#10b981':'#ef4444'}}>{fmt$(tot.annualMarg)}</td>
+            <td>{payback>0? fmtN(payback):'—'}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function App(){
+  const STORAGE = 'spl-margin-calc-v1';
+  const [tasks, setTasks] = useState(()=>{
+    try{
+      const raw = localStorage.getItem(STORAGE);
+      if(raw){ const p = JSON.parse(raw); if(Array.isArray(p) && p.length) return p; }
+    }catch{}
+    return [
+      {...emptyTask('Standard Gas Tech'), ...presets['Standard Gas Tech']},
+      {...emptyTask('Gas Lead'),          ...presets['Gas Lead']},
+    ];
+  });
+  const [active, setActive] = useState(0);
+
+  useEffect(()=>{
+    try{ localStorage.setItem(STORAGE, JSON.stringify(tasks)); }catch{}
+    if(active>=tasks.length) setActive(Math.max(0,tasks.length-1));
+  },[tasks]);
+
+  const updateTask = (i,t)=> setTasks(prev=>prev.map((x,idx)=>idx===i?t:x));
+  const addTask = ()=>{ setTasks(prev=>[...prev,emptyTask(`Task ${prev.length+1}`)]); setActive(tasks.length); };
+  const removeTask = (i)=>{ if(!confirm('Delete this task?')) return; setTasks(prev=>prev.filter((_,idx)=>idx!==i)); };
+  const duplicateTask = (i)=>{ setTasks(prev=>{ const c={...prev[i], id:uid(), name:prev[i].name+' (copy)'}; const arr=[...prev]; arr.splice(i+1,0,c); return arr; }); };
+
+  const exportJSON = ()=>{
+    const blob = new Blob([JSON.stringify(tasks,null,2)],{type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'margin-calculator.json';
+    a.click();
+  };
+  const importJSON = (e)=>{
+    const f = e.target.files[0]; if(!f) return;
+    const rd = new FileReader();
+    rd.onload = ()=>{ try{ const p=JSON.parse(rd.result); if(Array.isArray(p)) setTasks(p); }catch{ alert('Invalid file'); } };
+    rd.readAsText(f);
+  };
+  const resetAll = ()=>{ if(confirm('Clear all tasks?')){ setTasks([emptyTask('New Task')]); setActive(0);} };
+
+  const t = tasks[active];
+
+  return (
+    <>
+      <header>
+        <div className="brand">
+          <div className="logo">$</div>
+          <div>
+            <h1>SPL Margin Calculator</h1>
+            <div className="sub">Task-level cost builder · Equipment / Labor / Mileage / Per-Meter</div>
+          </div>
+        </div>
+        <div className="actions">
+          <button className="ghost" onClick={exportJSON}>Export</button>
+          <label className="ghost" style={{background:'transparent',border:'1px solid var(--line)',
+                  color:'var(--text)',borderRadius:6,padding:'8px 12px',cursor:'pointer',fontSize:12,fontWeight:600}}>
+            Import<input type="file" accept="application/json" style={{display:'none'}} onChange={importJSON}/>
+          </label>
+          <button className="secondary" onClick={resetAll}>Reset</button>
+          <button onClick={addTask}>+ Task</button>
+        </div>
+      </header>
+
+      <main>
+        <div className="tabs">
+          {tasks.map((tt,i)=>(
+            <div key={tt.id} className={"tab"+(i===active?" active":"")} onClick={()=>setActive(i)}>
+              <span>{tt.name || `Task ${i+1}`}</span>
+              {tasks.length>1 && <span className="x" onClick={(e)=>{e.stopPropagation();removeTask(i);}}>✕</span>}
+            </div>
+          ))}
+          <div className="tab" onClick={addTask} style={{cursor:'pointer'}}>+ Add task</div>
+        </div>
+
+        {t && <TaskEditor task={t}
+                          update={(nt)=>updateTask(active,nt)}
+                          remove={()=>removeTask(active)}
+                          duplicate={()=>duplicateTask(active)} />}
+
+        <Summary tasks={tasks}/>
+
+        <div className="disclaimer">
+          Formulas: Equipment/day = CAPEX ÷ working days · Equipment billable/day = cost × (1 + payback%). Labor cost = rate × hours ÷ utilization (OT ×1.5). Project totals add equipment once. Per-meter rate = Project total ÷ Number of tasks. Data auto-saves in your browser.
+        </div>
+      </main>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
